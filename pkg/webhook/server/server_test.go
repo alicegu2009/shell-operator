@@ -1,20 +1,24 @@
-package validating_webhook
+package server
 
 import (
 	"crypto/x509"
+	"github.com/go-chi/chi"
 	"io/ioutil"
 	"testing"
-
-	"github.com/flant/shell-operator/pkg/app"
 )
 
 func Test_ServerStart(t *testing.T) {
-	app.ValidatingWebhookSettings.ServerKeyPath = "testdata/demo-certs/server-key.pem"
-	app.ValidatingWebhookSettings.ServerCertPath = "testdata/demo-certs/server.crt"
+	s := &Settings{
+		ServerCertPath: "testdata/demo-certs/server.crt",
+		ServerKeyPath:  "testdata/demo-certs/server-key.pem",
+	}
 
-	h := NewWebhookHandler()
+	rtr := chi.NewRouter()
 
-	srv := &WebhookServer{Router: h.Router}
+	srv := &WebhookServer{
+		Settings: s,
+		Router:   rtr,
+	}
 
 	err := srv.Start()
 	if err != nil {
@@ -25,11 +29,12 @@ func Test_ServerStart(t *testing.T) {
 func Test_Client_CA(t *testing.T) {
 	roots := x509.NewCertPool()
 
-	app.ValidatingWebhookSettings.ClientCAPaths = []string{
+	s := Settings{}
+	s.ClientCAPaths = []string{
 		"testdata/demo-certs/client-ca.pem",
 	}
 
-	for _, caPath := range app.ValidatingWebhookSettings.ClientCAPaths {
+	for _, caPath := range s.ClientCAPaths {
 		caBytes, err := ioutil.ReadFile(caPath)
 		if err != nil {
 			t.Fatalf("ca '%s' should be read: %v", caPath, err)

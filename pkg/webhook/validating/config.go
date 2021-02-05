@@ -1,9 +1,7 @@
-package validating_webhook
+package validating
 
 import (
-	"regexp"
-	"strings"
-
+	"github.com/flant/shell-operator/pkg/utils/string_helper"
 	v1 "k8s.io/api/admissionregistration/v1"
 )
 
@@ -26,23 +24,10 @@ type ValidatingWebhookConfig struct {
 }
 
 // UpdateIds use confId and webhookId to set a ConfigurationId prefix and a WebhookId.
-func (c *ValidatingWebhookConfig) UpdateIds(confId, webhookId string) {
-	c.Metadata.ConfigurationId = confId
-	if confId == "" {
+func (c *ValidatingWebhookConfig) UpdateIds(confID, webhookID string) {
+	c.Metadata.ConfigurationId = confID
+	if confID == "" {
 		c.Metadata.ConfigurationId = DefaultConfigurationId
 	}
-	c.Metadata.WebhookId = safeUrlString(webhookId)
-}
-
-var safeReList = []*regexp.Regexp{
-	regexp.MustCompile(`([A-Z])`),
-	regexp.MustCompile(`[^a-z0-9-/]`),
-	regexp.MustCompile(`[-]+`),
-}
-
-func safeUrlString(s string) string {
-	s = safeReList[0].ReplaceAllString(s, "-$1")
-	s = strings.ToLower(s)
-	s = safeReList[1].ReplaceAllString(s, "-")
-	return safeReList[2].ReplaceAllString(s, "-")
+	c.Metadata.WebhookId = string_helper.SafeURLString(webhookID)
 }

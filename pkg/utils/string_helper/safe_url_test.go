@@ -1,8 +1,8 @@
-package validating_webhook
+package string_helper
 
 import "testing"
 
-func Test_safeUrlString(t *testing.T) {
+func Test_SafeURLString(t *testing.T) {
 	tests := []struct {
 		in  string
 		out string
@@ -31,7 +31,7 @@ func Test_safeUrlString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.in, func(t *testing.T) {
-			res := safeUrlString(tt.in)
+			res := SafeURLString(tt.in)
 			if res != tt.out {
 				t.Fatalf("safeUrl should give '%s', got '%s'", tt.out, res)
 			}

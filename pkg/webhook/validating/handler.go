@@ -1,4 +1,4 @@
-package validating_webhook
+package validating
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/shell-operator/pkg/utils/structured-logger"
-	. "github.com/flant/shell-operator/pkg/validating_webhook/types"
+	. "github.com/flant/shell-operator/pkg/webhook/validating/types"
 )
 
 type WebhookHandler struct {
@@ -68,8 +68,8 @@ func (h *WebhookHandler) ServeReviewRequest(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *WebhookHandler) HandleReviewRequest(path string, body []byte) (*v1.AdmissionReview, error) {
-	configurationId, webhookId := DetectConfigurationAndWebhook(path)
-	log.Infof("Got AdmissionReview request for confId='%s' webhookId='%s'", configurationId, webhookId)
+	configurationID, webhookID := DetectConfigurationAndWebhook(path)
+	log.Infof("Got AdmissionReview request for confId='%s' webhookId='%s'", configurationID, webhookID)
 
 	var review v1.AdmissionReview
 	err := json.Unmarshal(body, &review)
@@ -95,8 +95,8 @@ func (h *WebhookHandler) HandleReviewRequest(path string, body []byte) (*v1.Admi
 	}
 
 	event := ValidatingEvent{
-		WebhookId:       webhookId,
-		ConfigurationId: configurationId,
+		WebhookId:       webhookID,
+		ConfigurationId: configurationID,
 		Review:          &review,
 	}
 
@@ -123,20 +123,21 @@ func (h *WebhookHandler) HandleReviewRequest(path string, body []byte) (*v1.Admi
 	return response, nil
 }
 
-func DetectConfigurationAndWebhook(path string) (configurationId string, webhookId string) {
+// DetectConfigurationAndWebhook extracts configurationID and a webhookID from the url path.
+func DetectConfigurationAndWebhook(path string) (configurationID string, webhookID string) {
 	parts := strings.Split(path, "/")
 	webhookParts := []string{}
 	for _, p := range parts {
 		if p == "" {
 			continue
 		}
-		if configurationId == "" {
-			configurationId = p
+		if configurationID == "" {
+			configurationID = p
 			continue
 		}
 		webhookParts = append(webhookParts, p)
 	}
-	webhookId = strings.Join(webhookParts, "/")
+	webhookID = strings.Join(webhookParts, "/")
 
 	return
 }

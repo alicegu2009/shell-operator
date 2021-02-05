@@ -1,13 +1,14 @@
-package validating_webhook
+package validating
 
 import (
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 
-	. "github.com/flant/shell-operator/pkg/validating_webhook/types"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/flant/shell-operator/pkg/app"
+	. "github.com/flant/shell-operator/pkg/webhook/validating/types"
+
 	"github.com/flant/shell-operator/pkg/kube"
+	"github.com/flant/shell-operator/pkg/webhook/server"
 )
 
 type ValidatingEventHandlerFn func(event ValidatingEvent) (*ValidatingResponse, error)
@@ -27,14 +28,12 @@ type WebhookManager struct {
 
 	ValidatingEventHandlerFn ValidatingEventHandlerFn
 
-	Namespace         string
-	ConfigurationName string
-	ServiceName       string
+	Settings  *WebhookSettings
+	Namespace string
 
-	CABundle               []byte
 	DefaultConfigurationId string
 
-	Server    *WebhookServer
+	Server    *server.WebhookServer
 	Resources map[string]*WebhookResource
 	Handler   *WebhookHandler
 }
@@ -61,26 +60,28 @@ func (m *WebhookManager) Init() error {
 		m.DefaultConfigurationId = DefaultConfigurationId
 	}
 	// settings
-	caBundleBytes, err := ioutil.ReadFile(app.ValidatingWebhookSettings.CAPath)
+	caBundleBytes, err := ioutil.ReadFile(m.Settings.CAPath)
 	if err != nil {
 		return err
 	}
-	m.CABundle = caBundleBytes
+	m.Settings.CABundle = caBundleBytes
 
 	m.Handler = NewWebhookHandler()
 	m.Handler.Manager = m
 
-	m.Server = &WebhookServer{
-		Router: m.Handler.Router,
+	m.Server = &server.WebhookServer{
+		Settings:  &m.Settings.Settings,
+		Namespace: m.Namespace,
+		Router:    m.Handler.Router,
 	}
 
 	m.Resources = make(map[string]*WebhookResource)
 	r := NewWebhookResource()
 	r.KubeClient = m.KubeClient
 	r.Namespace = m.Namespace
-	r.ConfigurationName = m.ConfigurationName
-	r.ServiceName = m.ServiceName
-	r.CABundle = m.CABundle
+	r.ConfigurationName = m.Settings.ConfigurationName
+	r.ServiceName = m.Settings.ServiceName
+	r.CABundle = m.Settings.CABundle
 	m.Resources[m.DefaultConfigurationId] = r
 
 	return nil
@@ -96,9 +97,9 @@ func (m *WebhookManager) AddWebhook(config *ValidatingWebhookConfig) {
 		r = NewWebhookResource()
 		r.KubeClient = m.KubeClient
 		r.Namespace = m.Namespace
-		r.ConfigurationName = m.ConfigurationName + "-" + confId
-		r.ServiceName = m.ServiceName
-		r.CABundle = m.CABundle
+		r.ConfigurationName = m.Settings.ConfigurationName + "-" + confId
+		r.ServiceName = m.Settings.ServiceName
+		r.CABundle = m.Settings.CABundle
 		m.Resources[confId] = r
 	}
 	r.AddWebhook(config)

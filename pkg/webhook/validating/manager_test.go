@@ -1,22 +1,21 @@
-package validating_webhook
+package validating
 
 import (
 	"testing"
 
 	v1 "k8s.io/api/admissionregistration/v1"
-
-	"github.com/flant/shell-operator/pkg/app"
 )
 
 func Test_Manager_AddWebhook(t *testing.T) {
 	m := NewWebhookManager()
-	app.Namespace = "default"
-	vs := app.ValidatingWebhookSettings
+	m.Namespace = "default"
+	vs := &WebhookSettings{}
 	vs.ConfigurationName = "webhook-configuration"
 	vs.ServiceName = "webhook-service"
 	vs.ServerKeyPath = "testdata/demo-certs/server-key.pem"
 	vs.ServerCertPath = "testdata/demo-certs/server.crt"
 	vs.CAPath = "testdata/demo-certs/ca.pem"
+	m.Settings = vs
 
 	err := m.Init()
 

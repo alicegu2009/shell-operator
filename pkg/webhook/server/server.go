@@ -1,4 +1,4 @@
-package validating_webhook
+package server
 
 import (
 	"crypto/tls"
@@ -11,30 +11,30 @@ import (
 
 	"github.com/go-chi/chi"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/flant/shell-operator/pkg/app"
 )
 
 type WebhookServer struct {
-	Router chi.Router
+	Settings  *Settings
+	Namespace string
+	Router    chi.Router
 }
 
 // StartWebhookServer starts https server
 // to listen for AdmissionReview requests from cluster
 func (s *WebhookServer) Start() error {
-	// Load server certificate
+	// Load server certificate.
 	keyPair, err := tls.LoadX509KeyPair(
-		app.ValidatingWebhookSettings.ServerCertPath,
-		app.ValidatingWebhookSettings.ServerKeyPath,
+		s.Settings.ServerCertPath,
+		s.Settings.ServerKeyPath,
 	)
 	if err != nil {
 		return fmt.Errorf("load TLS certs: %v", err)
 	}
 
-	// Construct hostname
+	// Construct a hostname for certificate.
 	host := fmt.Sprintf("%s.%s",
-		app.ValidatingWebhookSettings.ServiceName,
-		app.Namespace,
+		s.Settings.ServiceName,
+		s.Namespace,
 	)
 
 	tlsConf := &tls.Config{
@@ -43,10 +43,10 @@ func (s *WebhookServer) Start() error {
 	}
 
 	// Load client CA if defined
-	if len(app.ValidatingWebhookSettings.ClientCAPaths) > 0 {
+	if len(s.Settings.ClientCAPaths) > 0 {
 		roots := x509.NewCertPool()
 
-		for _, caPath := range app.ValidatingWebhookSettings.ClientCAPaths {
+		for _, caPath := range s.Settings.ClientCAPaths {
 			caBytes, err := ioutil.ReadFile(caPath)
 			if err != nil {
 				return fmt.Errorf("load client CA '%s': %v", caPath, err)
@@ -62,7 +62,7 @@ func (s *WebhookServer) Start() error {
 		tlsConf.ClientCAs = roots
 	}
 
-	listenAddr := app.ValidatingWebhookSettings.ListenAddr + ":" + app.ValidatingWebhookSettings.ListenPort
+	listenAddr := s.Settings.ListenAddr + ":" + s.Settings.ListenPort
 	// Check if port is available
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
@@ -85,7 +85,6 @@ func (s *WebhookServer) Start() error {
 		err := srv.ServeTLS(listener, "", "")
 		if err != nil {
 			log.Errorf("Error starting Webhook https server: %v", err)
-			//os.Exit(1)
 		}
 	}()
 

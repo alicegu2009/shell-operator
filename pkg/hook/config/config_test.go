@@ -1,4 +1,4 @@
-package hook
+package config
 
 import (
 	"fmt"
@@ -629,6 +629,101 @@ kubernetesValidating:
     apiVersions: ["v1"]
     resources: ["pods"]
   timeoutSeconds: 32
+`,
+			func() {
+				g.Expect(err).Should(HaveOccurred())
+			},
+		},
+		{
+			"v1 kubernetesCustomResourceConversion",
+			`
+configVersion: v1
+kubernetes:
+- name: pods
+  kind: pods
+  group: main
+kubernetesCustomResourceConversion:
+- name: v1alpha1-to-v1beta1
+  crdName: crontabs.stable.example.com
+  conversions:
+  - fromVersion: v1alpha1
+    toVersion: v1beta1
+- name: v1beta-to-v1
+  crdName: crontabs.stable.example.com
+  conversions:
+  - fromVersion: v1beta1
+    toVersion: v1beta2
+  - fromVersion: v1beta2
+    toVersion: v1beta3
+  - fromVersion: v1beta3
+    toVersion: v1
+  includeSnapshotsFrom: ["pods"]
+`,
+			func() {
+				g.Expect(err).ShouldNot(HaveOccurred())
+
+				// Version
+				g.Expect(hookConfig.Version).To(Equal("v1"))
+				g.Expect(hookConfig.V0).To(BeNil())
+				g.Expect(hookConfig.V1).NotTo(BeNil())
+
+				// Sections
+				g.Expect(hookConfig.OnStartup).To(BeNil())
+				g.Expect(hookConfig.OnKubernetesEvents).Should(HaveLen(1))
+				g.Expect(hookConfig.KubernetesConversion).Should(HaveLen(2))
+
+				// Conversion section with one conversion.
+				cfg := hookConfig.KubernetesConversion[0]
+				g.Expect(cfg.BindingName).To(Equal("v1alpha1-to-v1beta1"))
+				g.Expect(cfg.Webhook).ShouldNot(BeNil())
+				wh := cfg.Webhook
+				g.Expect(wh.CrdName).Should(Equal("crontabs.stable.example.com"))
+				g.Expect(wh.Conversions).Should(HaveLen(1))
+
+				// Conversion section with multiple conversions.
+				cfg = hookConfig.KubernetesConversion[1]
+				g.Expect(cfg.BindingName).To(Equal("v1beta-to-v1"))
+				g.Expect(cfg.Webhook).ShouldNot(BeNil())
+				wh = cfg.Webhook
+				g.Expect(wh.CrdName).Should(Equal("crontabs.stable.example.com"))
+				g.Expect(wh.Conversions).Should(HaveLen(3))
+			},
+		},
+		{
+			"v1 kubernetesCustomResourceConversion with name only",
+			`
+configVersion: v1
+kubernetesCustomResourceConversion:
+- name: v1beta-to-v2
+`,
+			func() {
+				g.Expect(err).Should(HaveOccurred())
+			},
+		},
+		{
+			"v1 kubernetesCustomResourceConversion with no crdName",
+			`
+configVersion: v1
+kubernetesCustomResourceConversion:
+- name: v1beta-to-v2
+  conversions:
+  - fromVersion: q
+    toVersion: q
+`,
+			func() {
+				g.Expect(err).Should(HaveOccurred())
+			},
+		},
+		{
+			"v1 kubernetesCustomResourceConversion with invalid conversion",
+			`
+configVersion: v1
+kubernetesCustomResourceConversion:
+- name: v1beta-to-v2
+  crdName: crontabs.stable.example.com
+  conversions:
+  - fromVersion: q
+    to: q
 `,
 			func() {
 				g.Expect(err).Should(HaveOccurred())
