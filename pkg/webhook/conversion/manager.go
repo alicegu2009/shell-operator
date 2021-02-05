@@ -22,7 +22,7 @@ type ConversionEventHandlerFn func(event ConversionEvent) (*ConversionResponse, 
 //   - Call AddWebhook() to register a CRD name in conversion bindings in hooks
 //   - Start():
 //     - Start server loop.
-//    - Update clientConfig in each registered CRD.
+//     - Update clientConfig in each registered CRD.
 type WebhookManager struct {
 	KubeClient kube.KubernetesClient
 
@@ -51,9 +51,6 @@ func (m *WebhookManager) Init() error {
 		return err
 	}
 	m.Settings.CABundle = caBundleBytes
-
-	log.Infof("conversion manager settings: %+v", m.Settings)
-	log.Infof("conversion manager settings for server: %+v", m.Settings.Settings)
 
 	m.Handler = NewWebhookHandler()
 	m.Handler.Manager = m
@@ -87,9 +84,6 @@ func (m *WebhookManager) Start() error {
 }
 
 func (m *WebhookManager) AddWebhook(webhook *ConversionWebhookConfig) {
-	log.Infof("conversion manager: add webhook: %v", webhook)
-	log.Infof("conversion manager: self nil: %v", m == nil)
-	log.Infof("conversion manager: clientconfigs nil: %v, len=%d", m.ClientConfigs == nil, len(m.ClientConfigs))
 	if _, ok := m.ClientConfigs[webhook.CrdName]; !ok {
 		m.ClientConfigs[webhook.CrdName] = &CrdClientConfig{
 			KubeClient:  m.KubeClient,
