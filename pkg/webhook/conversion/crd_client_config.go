@@ -2,8 +2,6 @@ package conversion
 
 import (
 	"fmt"
-	"github.com/flant/shell-operator/pkg/utils/string_helper"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -14,22 +12,15 @@ import (
 
 // A clientConfig for a particular CRD.
 type CrdClientConfig struct {
-	KubeClient     kube.KubernetesClient
-	CrdName        string
-	ReviewVersions map[string]bool
-	Namespace      string
-	ServiceName    string
-	Path           string
-	CABundle       []byte
+	KubeClient  kube.KubernetesClient
+	CrdName     string
+	Namespace   string
+	ServiceName string
+	Path        string
+	CABundle    []byte
 }
 
-func (c *CrdClientConfig) AddReviewVersion(ver string) {
-	if c.ReviewVersions == nil {
-		c.ReviewVersions = make(map[string]bool)
-	}
-	ver = string_helper.TrimGroup(ver)
-	c.ReviewVersions[ver] = true
-}
+var SupportedConversionReviewVersions = []string{"v1"}
 
 func (c *CrdClientConfig) Update() error {
 	client := c.KubeClient
@@ -71,18 +62,14 @@ func (c *CrdClientConfig) Update() error {
 		CABundle: c.CABundle,
 	}
 
-	reviewVersions := make([]string, 0)
-	for ver := range c.ReviewVersions {
-		reviewVersions = append(reviewVersions, ver)
-	}
-	webhook.ConversionReviewVersions = reviewVersions
+	webhook.ConversionReviewVersions = SupportedConversionReviewVersions
 
 	_, err = client.ApiExt().CustomResourceDefinitions().Update(&crd)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("crd/%s spec.conversion is updated to webhook: reviewVersions=[%s]", c.CrdName, strings.Join(reviewVersions, ","))
+	log.Infof("crd/%s spec.conversion is updated to a webhook behind %s/%s", c.CrdName, c.ServiceName, c.Path)
 
 	return nil
 }

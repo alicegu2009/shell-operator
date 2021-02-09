@@ -124,8 +124,7 @@ func Test_HookManager_conversion_chains(t *testing.T) {
 	err := hm.Init()
 	g.Expect(err).ShouldNot(HaveOccurred(), "Hook manager Init should not fail: %v", err)
 
-	// conversion chain for 1 crd
-	g.Expect(hm.conversionChains).Should(HaveLen(2))
+	g.Expect(hm.conversionChains).Should(HaveLen(2), "There should be conversion chains for 2 CRDs.")
 
 	crdName := "crontabs.stable.example.com"
 	g.Expect(hm.conversionChains).Should(HaveKey(crdName))
@@ -211,4 +210,151 @@ func Test_HookManager_conversion_chains(t *testing.T) {
 
 	// Cache has 6 paths from bindings, 2 more paths for each full path and 1 more path for each part path.
 	g.Expect(chain.PathsCache).Should(HaveLen(6 + 2 + 2 + 1 + 1))
+}
+
+func Test_HookManager_conversion_chains_full(t *testing.T) {
+	g := NewWithT(t)
+
+	hm, rmFn := newHookManager(t, "testdata/hook_manager_conversion_chains_full")
+	defer rmFn()
+
+	err := hm.Init()
+	g.Expect(err).ShouldNot(HaveOccurred(), "Hook manager Init should not fail: %v", err)
+
+	g.Expect(hm.conversionChains).Should(HaveLen(2), "There should be conversion chains for 2 CRDs.")
+
+	crdName := "crontabs.stable.example.com"
+	g.Expect(hm.conversionChains).Should(HaveKey(crdName))
+
+	chain := hm.conversionChains[crdName]
+	// 6 paths in cache for each binding.
+	g.Expect(chain.PathsCache).Should(HaveLen(6))
+
+	var convPath []string
+
+	// Find path for unknown crd
+	convPath = hm.FindConversionChain("unknown"+crdName, conversion.ConversionRule{
+		FromVersion: "azaza",
+		ToVersion:   "ololo",
+	})
+	g.Expect(convPath).Should(BeNil())
+
+	// Find path for unknown from version
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "unknown-version",
+		ToVersion:   "ololo",
+	})
+	g.Expect(convPath).Should(BeNil())
+
+	// Find path for unknown to version
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "ololo",
+		ToVersion:   "unknown-version",
+	})
+	g.Expect(convPath).Should(BeNil())
+
+	// Find path for unknown from and to versions
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "from-unknown-version",
+		ToVersion:   "to-unknown-version",
+	})
+	g.Expect(convPath).Should(BeNil())
+
+	// Find a simple path.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "azaza",
+		ToVersion:   "ololo",
+	})
+	g.Expect(convPath).Should(HaveLen(1))
+
+	// Find a simple path with full versions.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "group.io/azaza",
+		ToVersion:   "unstable.example.com/ololo",
+	})
+	g.Expect(convPath).Should(HaveLen(1))
+
+	// Find a full path in an "up" direction with full versions.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "group.io/azaza",
+		ToVersion:   "abc",
+	})
+	// g.Expect(hm.conversionChains["crontabs.stable.example.com"]).Should(HaveLen(1))
+	g.Expect(convPath).Should(HaveLen(3))
+	g.Expect(convPath[0]).Should(Equal("group.io/azaza->ololo"))
+	g.Expect(convPath[1]).Should(Equal("unstable.example.com/ololo->foobar"))
+	g.Expect(convPath[2]).Should(Equal("stable.example.com/foobar->next.io/abc"))
+
+	// Find a full path in a "down" direction.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "abc",
+		ToVersion:   "azaza",
+	})
+	g.Expect(convPath).Should(HaveLen(3))
+	g.Expect(convPath[0]).Should(Equal("stable.example.com/abc->stable.example.com/foobar"))
+	g.Expect(convPath[1]).Should(Equal("foobar->ololo"))
+	g.Expect(convPath[2]).Should(Equal("ololo->azaza"))
+
+	// Find a part path in an "up" direction.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "ololo",
+		ToVersion:   "abc",
+	})
+	g.Expect(convPath).Should(HaveLen(2))
+	g.Expect(convPath[0]).Should(Equal("unstable.example.com/ololo->foobar"))
+	g.Expect(convPath[1]).Should(Equal("stable.example.com/foobar->next.io/abc"))
+
+	// Find a part path in a "down" direction.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "foobar",
+		ToVersion:   "azaza",
+	})
+	g.Expect(convPath).Should(HaveLen(2))
+	g.Expect(convPath[0]).Should(Equal("foobar->ololo"))
+	g.Expect(convPath[1]).Should(Equal("ololo->azaza"))
+
+	// Cache has 6 paths from bindings, 2 more paths for each full path and 1 more path for each part path.
+	g.Expect(chain.PathsCache).Should(HaveLen(6+2+2+1+1), "PathCache should contain only paths from hook, no additional paths with short versions are allowed.")
+
+	// Check a 'different group but same version' conversion
+	crdName = "crontabs.unstable.example.com"
+	g.Expect(hm.conversionChains).Should(HaveKey(crdName))
+
+	chain = hm.conversionChains[crdName]
+	// 3 paths in cache for hook2.sh.
+	g.Expect(chain.PathsCache).Should(HaveLen(3))
+
+	// Find a same version path.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "v1beta1",
+		ToVersion:   "v1beta1",
+	})
+	//g.Expect(hm.conversionChains[crdName]).Should(HaveLen(1))
+	g.Expect(convPath).Should(HaveLen(1))
+	g.Expect(convPath[0]).Should(Equal("alpha.example.com/v1beta1->alpha.example.io/v1beta1"))
+
+	// Find a same version path with full versions.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "alpha.example.com/v1beta1",
+		ToVersion:   "alpha.example.io/v1beta1",
+	})
+	g.Expect(convPath).Should(HaveLen(1))
+	g.Expect(convPath[0]).Should(Equal("alpha.example.com/v1beta1->alpha.example.io/v1beta1"))
+
+	// Find a same version path with full versions.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "v1beta1",
+		ToVersion:   "alpha.example.io/v1beta1",
+	})
+	g.Expect(convPath).Should(HaveLen(1))
+	g.Expect(convPath[0]).Should(Equal("alpha.example.com/v1beta1->alpha.example.io/v1beta1"))
+
+	// Find a same version path with full versions.
+	convPath = hm.FindConversionChain(crdName, conversion.ConversionRule{
+		FromVersion: "alpha.example.com/v1beta1",
+		ToVersion:   "v1beta1",
+	})
+	g.Expect(convPath).Should(HaveLen(1))
+	g.Expect(convPath[0]).Should(Equal("alpha.example.com/v1beta1->alpha.example.io/v1beta1"))
+
 }

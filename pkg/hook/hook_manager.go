@@ -62,7 +62,7 @@ type hookManager struct {
 	hooksInOrder map[BindingType][]*Hook
 
 	// Index crdName -> fromVersion -> conversionLink
-	conversionChains map[string]*ConversionChain
+	conversionChains conversion.ChainStorage
 }
 
 // hookManager should implement HookManager
@@ -73,7 +73,7 @@ func NewHookManager() *hookManager {
 		hooksByName:      make(map[string]*Hook),
 		hookNamesInOrder: make([]string, 0),
 		hooksInOrder:     make(map[BindingType][]*Hook),
-		conversionChains: make(map[string]*ConversionChain),
+		conversionChains: conversion.NewChainStorage(),
 	}
 }
 
@@ -343,129 +343,22 @@ func (hm *hookManager) HandleConversionEvent(event ConversionEvent, conversionRu
 func (hm *hookManager) UpdateConversionChains() error {
 	vHooks, _ := hm.GetHooksInOrder(KubernetesConversion)
 
-	targetVersions := make(map[string]map[string]bool)
-
 	// Update conversionChains.
 	for _, hookName := range vHooks {
 		h := hm.GetHook(hookName)
 
 		for _, cfg := range h.Config.KubernetesConversion {
 			crdName := cfg.Webhook.CrdName
-
-			if _, ok := hm.conversionChains[crdName]; !ok {
-				hm.conversionChains[crdName] = &ConversionChain{
-					PathsCache:  make(map[string][]string),
-					Hooks:       make(map[string]*Hook),
-					FromToCache: make(map[string]map[string]bool),
-				}
-				targetVersions[crdName] = make(map[string]bool)
-			}
-			chain := hm.conversionChains[crdName]
-
+			chain := hm.conversionChains.Get(crdName)
 			for _, conversionRule := range cfg.Webhook.Conversions {
-				ruleID := conversionRule.String()
-				chain.Hooks[ruleID] = h
-				chain.PathsCache[ruleID] = []string{ruleID}
-				if _, ok := chain.FromToCache[conversionRule.FromVersion]; !ok {
-					chain.FromToCache[conversionRule.FromVersion] = make(map[string]bool)
-				}
-				chain.FromToCache[conversionRule.FromVersion][conversionRule.ToVersion] = true
-				targetVersions[crdName][conversionRule.ToVersion] = true
+				chain.Put(conversionRule)
 			}
 		}
-	}
-
-	for crdName, targets := range targetVersions {
-		hm.conversionChains[crdName].TargetVersions = targets
 	}
 
 	return nil
 }
 
-// TODO Can we use conversion.ConversionRule as a key and eliminate TrimSuffix?
 func (hm *hookManager) FindConversionChain(crdName string, rule conversion.ConversionRule) []string {
-	chain, ok := hm.conversionChains[crdName]
-	if !ok {
-		return nil
-	}
-
-	// There is no path to a desired version.
-	if _, ok := chain.TargetVersions[rule.ToVersion]; !ok {
-		return nil
-	}
-
-	ruleID := rule.String()
-
-	for {
-		if _, ok := chain.PathsCache[ruleID]; ok {
-			return chain.PathsCache[ruleID]
-		}
-
-		// Fill cache with more paths.
-		newPaths := map[string][]string{}
-		for ruleIDToCheck := range chain.PathsCache {
-			// Try only ids that starts from a source version.
-			if !strings.HasPrefix(ruleIDToCheck, rule.FromVersion+"->") {
-				continue
-			}
-
-			newFrom := strings.TrimPrefix(ruleIDToCheck, rule.FromVersion+"->")
-
-			if newFrom == rule.FromVersion {
-				// Ignore loops.
-				continue
-			}
-
-			if _, ok := chain.FromToCache[newFrom]; !ok {
-				// A dead end: bindings have no conversion started from newFrom.
-				continue
-			}
-
-			// Test routes from newFrom.
-			for newTo := range chain.FromToCache[newFrom] {
-				if newTo == rule.FromVersion {
-					// Ignore loops.
-					continue
-				}
-				// A new path id and an array of bindings.
-				newRuleId := rule.FromVersion + "->" + newTo
-				newPath := append(chain.PathsCache[ruleIDToCheck], newFrom+"->"+newTo)
-
-				// This path is already discovered.
-				if _, ok := chain.PathsCache[newRuleId]; ok {
-					continue
-				}
-
-				newPaths[newRuleId] = newPath
-			}
-		}
-
-		// break if no new paths are discovered.
-		if len(newPaths) == 0 {
-			break
-		}
-
-		// Put new paths in cache.
-		for id, path := range newPaths {
-			chain.PathsCache[id] = path
-		}
-	}
-
-	return nil
-}
-
-// ConversionChain is a storage of conversion paths for CRD.
-// PathsCache is a cache of paths. It is pre-filled with conversions from bindings.
-// FromToCache is a map to find possible toVersions with a given fromVersion.
-// TargetVersions is a map to check if desiredVersion from ConversionReview is reachable.
-// Hooks is a map to find a Hook by a given rule.
-type ConversionChain struct {
-	// chainId ("srcVer->desiredVer") to a sequence of ruleIds from bindings
-	PathsCache map[string][]string
-	// from -> to cache
-	FromToCache map[string]map[string]bool
-	// An array of unique toVersion values
-	TargetVersions map[string]bool
-	// ruleId to a Hook
-	Hooks map[string]*Hook
+	return hm.conversionChains.FindConversionChain(crdName, rule)
 }

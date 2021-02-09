@@ -68,10 +68,16 @@ func ConversionResponseFromReader(r io.Reader) (*ConversionResponse, error) {
 
 func (r *ConversionResponse) Dump() string {
 	b := new(strings.Builder)
-	b.WriteString("ConversionResponse(failedMessage=")
-	b.WriteString(r.FailedMessage)
+	b.WriteString("ConversionResponse(")
+	if r.FailedMessage != "" {
+		b.WriteString("failedMessage=")
+		b.WriteString(r.FailedMessage)
+	}
 	if len(r.ConvertedObjects) > 0 {
-		b.WriteString(",convertedObjects.len=")
+		if r.FailedMessage != "" {
+			b.WriteRune(',')
+		}
+		b.WriteString("convertedObjects.len=")
 		b.WriteString(strconv.FormatInt(int64(len(r.ConvertedObjects)), 10))
 	}
 	b.WriteString(")")

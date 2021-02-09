@@ -94,8 +94,4 @@ func (m *WebhookManager) AddWebhook(webhook *ConversionWebhookConfig) {
 			CABundle:    m.Settings.CABundle,
 		}
 	}
-
-	for _, convRule := range webhook.Conversions {
-		m.ClientConfigs[webhook.CrdName].AddReviewVersion(convRule.FromVersion)
-	}
 }

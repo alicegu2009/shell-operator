@@ -451,8 +451,6 @@ func (op *ShellOperator) ConversionEventHandler(event ConversionEvent) (*Convers
 
 			res := op.TaskHandler(tasks[0])
 
-			logEntry.Infof("Hook return: %v", res)
-
 			if res.Status == "Fail" {
 				return &ConversionResponse{
 					FailedMessage:    fmt.Sprintf("Hook failed to convert to %s", event.Review.Request.DesiredAPIVersion),
@@ -472,7 +470,7 @@ func (op *ShellOperator) ConversionEventHandler(event ConversionEvent) (*Convers
 
 			// Stop iterating if hook has converted all objects to a desiredAPIVersions.
 			newSourceVersions := conversion.ExtractAPIVersions(event.Objects)
-			logEntry.Infof("Hook return conversion response: failMsg=%s, %d convertedObjects, versions:%v, desired: %s", response.FailedMessage, len(response.ConvertedObjects), newSourceVersions, event.Review.Request.DesiredAPIVersion)
+			//logEntry.Infof("Hook return conversion response: failMsg=%s, %d convertedObjects, versions:%v, desired: %s", response.FailedMessage, len(response.ConvertedObjects), newSourceVersions, event.Review.Request.DesiredAPIVersion)
 
 			if len(newSourceVersions) == 1 && newSourceVersions[0] == event.Review.Request.DesiredAPIVersion {
 				// success

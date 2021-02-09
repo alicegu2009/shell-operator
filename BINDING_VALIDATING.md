@@ -218,8 +218,6 @@ Command line options:
                              A path to a server private key for ValidatingWebhook. Can be set with $VALIDATING_WEBHOOK_SERVER_KEY.
 --validating-webhook-ca="/validating-certs/ca.crt"
                              A path to a ca bundle for ValidatingWebhook. Can be set with $VALIDATING_WEBHOOK_CA.
---validating-webhook-client-ca=VALIDATING-WEBHOOK-CLIENT-CA ...
-                             A path to a server certificate for ValidatingWebhook. Can be set with $VALIDATING_WEBHOOK_CLIENT_CA.
 --validating-webhook-service-name=VALIDATING-WEBHOOK-SERVICE-NAME ...
                              A name of a service in front of a shell-operator. Can be set with $VALIDATING_WEBHOOK_SERVICE_NAME.
 ```
