@@ -133,7 +133,7 @@ func Test_HookManager_conversion_chains(t *testing.T) {
 	// 6 paths in cache for each binding.
 	g.Expect(chain.PathsCache).Should(HaveLen(6))
 
-	var convPath []string
+	var convPath []conversion.Rule
 
 	// Find path for unknown crd
 	convPath = hm.FindConversionChain("unknown"+crdName, conversion.Rule{
@@ -230,7 +230,7 @@ func Test_HookManager_conversion_chains_full(t *testing.T) {
 	// 6 paths in cache for each binding.
 	g.Expect(chain.PathsCache).Should(HaveLen(6))
 
-	var convPath []string
+	var convPath []conversion.Rule
 
 	// Find path for unknown crd
 	convPath = hm.FindConversionChain("unknown"+crdName, conversion.Rule{
