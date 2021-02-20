@@ -39,8 +39,8 @@ type HookManager interface {
 	HandleKubeEvent(kubeEvent KubeEvent, createTaskFn func(*Hook, controller.BindingExecutionInfo))
 	HandleScheduleEvent(crontab string, createTaskFn func(*Hook, controller.BindingExecutionInfo))
 	HandleValidatingEvent(event ValidatingEvent, createTaskFn func(*Hook, controller.BindingExecutionInfo))
-	HandleConversionEvent(event conversion.Event, conversionRuleID string, createTaskFn func(*Hook, controller.BindingExecutionInfo))
-	FindConversionChain(crdName string, rule conversion.Rule) []string
+	HandleConversionEvent(event conversion.Event, rule conversion.Rule, createTaskFn func(*Hook, controller.BindingExecutionInfo))
+	FindConversionChain(crdName string, rule conversion.Rule) []conversion.Rule
 }
 
 type hookManager struct {
@@ -324,13 +324,13 @@ func (hm *hookManager) HandleValidatingEvent(event ValidatingEvent, createTaskFn
 }
 
 // HandleConversionEvent receives a crdName and calculates a sequence of hooks to run.
-func (hm *hookManager) HandleConversionEvent(event conversion.Event, conversionRuleID string, createTaskFn func(*Hook, controller.BindingExecutionInfo)) {
+func (hm *hookManager) HandleConversionEvent(event conversion.Event, rule conversion.Rule, createTaskFn func(*Hook, controller.BindingExecutionInfo)) {
 	vHooks, _ := hm.GetHooksInOrder(KubernetesConversion)
 
 	for _, hookName := range vHooks {
 		h := hm.GetHook(hookName)
-		if h.HookController.CanHandleConversionEvent(event, conversionRuleID) {
-			h.HookController.HandleConversionEvent(event, conversionRuleID, func(info controller.BindingExecutionInfo) {
+		if h.HookController.CanHandleConversionEvent(event, rule) {
+			h.HookController.HandleConversionEvent(event, rule, func(info controller.BindingExecutionInfo) {
 				if createTaskFn != nil {
 					createTaskFn(h, info)
 				}
@@ -358,6 +358,6 @@ func (hm *hookManager) UpdateConversionChains() error {
 	return nil
 }
 
-func (hm *hookManager) FindConversionChain(crdName string, rule conversion.Rule) []string {
+func (hm *hookManager) FindConversionChain(crdName string, rule conversion.Rule) []conversion.Rule {
 	return hm.conversionChains.FindConversionChain(crdName, rule)
 }

@@ -1,7 +1,6 @@
 package hook
 
 import (
-	"github.com/flant/shell-operator/pkg/app"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/flant/shell-operator/pkg/app"
 	"github.com/flant/shell-operator/pkg/hook/controller"
 	"github.com/flant/shell-operator/pkg/webhook/conversion"
 	"github.com/flant/shell-operator/pkg/webhook/validating"
@@ -124,10 +124,10 @@ func Test_HookManager_conversion_chains(t *testing.T) {
 	err := hm.Init()
 	g.Expect(err).ShouldNot(HaveOccurred(), "Hook manager Init should not fail: %v", err)
 
-	g.Expect(hm.conversionChains).Should(HaveLen(2), "There should be conversion chains for 2 CRDs.")
+	g.Expect(hm.conversionChains.Chains).Should(HaveLen(2), "There should be conversion chains for 2 CRDs.")
 
 	crdName := "crontabs.stable.example.com"
-	g.Expect(hm.conversionChains).Should(HaveKey(crdName))
+	g.Expect(hm.conversionChains.Chains).Should(HaveKey(crdName))
 
 	chain := hm.conversionChains.Get(crdName)
 	// 6 paths in cache for each binding.
@@ -221,10 +221,10 @@ func Test_HookManager_conversion_chains_full(t *testing.T) {
 	err := hm.Init()
 	g.Expect(err).ShouldNot(HaveOccurred(), "Hook manager Init should not fail: %v", err)
 
-	g.Expect(hm.conversionChains).Should(HaveLen(2), "There should be conversion chains for 2 CRDs.")
+	g.Expect(hm.conversionChains.Chains).Should(HaveLen(2), "There should be conversion chains for 2 CRDs.")
 
 	crdName := "crontabs.stable.example.com"
-	g.Expect(hm.conversionChains).Should(HaveKey(crdName))
+	g.Expect(hm.conversionChains.Chains).Should(HaveKey(crdName))
 
 	chain := hm.conversionChains.Get(crdName)
 	// 6 paths in cache for each binding.
@@ -318,7 +318,7 @@ func Test_HookManager_conversion_chains_full(t *testing.T) {
 
 	// Check a 'different group but same version' conversion
 	crdName = "crontabs.unstable.example.com"
-	g.Expect(hm.conversionChains).Should(HaveKey(crdName))
+	g.Expect(hm.conversionChains.Chains).Should(HaveKey(crdName))
 
 	chain = hm.conversionChains.Get(crdName)
 	// 3 paths in cache for hook2.sh.

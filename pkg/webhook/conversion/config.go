@@ -1,8 +1,6 @@
 package conversion
 
 import (
-	"strings"
-
 	"github.com/flant/shell-operator/pkg/utils/string_helper"
 )
 
@@ -33,12 +31,4 @@ func (r Rule) ShortFromVersion() string {
 
 func (r Rule) ShortToVersion() string {
 	return string_helper.TrimGroup(r.ToVersion)
-}
-
-func RuleFromString(in string) Rule {
-	idx := strings.Index(in, "->")
-	return Rule{
-		FromVersion: in[0:idx],
-		ToVersion:   in[idx+2:],
-	}
 }

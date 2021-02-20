@@ -288,6 +288,12 @@ func (op *ShellOperator) InitHookManager() (err error) {
 // InitWebhookManagers adds kubernetesValidating hooks
 // to a WebhookManager and set a validating event handler.
 func (op *ShellOperator) InitValidatingWebhookManager() (err error) {
+	// Do not init ValidatingWebhook if there are no KubernetesValidating hooks.
+	hookNames, _ := op.HookManager.GetHooksInOrder(KubernetesValidating)
+	if len(hookNames) == 0 {
+		return
+	}
+
 	// Initialize validating webhooks manager
 	op.ValidatingWebhookManager.WithKubeClient(op.KubeClient)
 	op.ValidatingWebhookManager.Settings = app.ValidatingWebhookSettings
@@ -297,12 +303,6 @@ func (op *ShellOperator) InitValidatingWebhookManager() (err error) {
 	if err != nil {
 		log.Errorf("ValidatingWebhookManager init: %v", err)
 		return err
-	}
-
-	// error is only for OnStartup hooks.
-	hookNames, _ := op.HookManager.GetHooksInOrder(KubernetesValidating)
-	if len(hookNames) == 0 {
-		return
 	}
 
 	for _, hookName := range hookNames {
@@ -371,6 +371,12 @@ func (op *ShellOperator) InitValidatingWebhookManager() (err error) {
 
 // InitConversionWebhookManager sets a conversions webhook manager.
 func (op *ShellOperator) InitConversionWebhookManager() (err error) {
+	// Do not init ConversionWebhook if there are no KubernetesConversion hooks.
+	hookNames, _ := op.HookManager.GetHooksInOrder(KubernetesConversion)
+	if len(hookNames) == 0 {
+		return
+	}
+
 	// Initialize validating webhooks manager
 	op.ConversionWebhookManager.KubeClient = op.KubeClient
 	op.ConversionWebhookManager.Settings = app.ConversionWebhookSettings
@@ -384,10 +390,6 @@ func (op *ShellOperator) InitConversionWebhookManager() (err error) {
 		return err
 	}
 
-	hookNames, _ := op.HookManager.GetHooksInOrder(KubernetesConversion)
-	if len(hookNames) == 0 {
-		return
-	}
 	for _, hookName := range hookNames {
 		h := op.HookManager.GetHook(hookName)
 		h.HookController.EnableConversionBindings()
@@ -423,9 +425,9 @@ func (op *ShellOperator) ConversionEventHandler(event conversion.Event) (*conver
 		}
 		logEntry.Infof("Find conversion path for %s: %v", rule.String(), convPath)
 
-		for _, ruleID := range convPath {
+		for _, rule := range convPath {
 			var tasks []task.Task
-			op.HookManager.HandleConversionEvent(event, ruleID, func(hook *hook.Hook, info controller.BindingExecutionInfo) {
+			op.HookManager.HandleConversionEvent(event, rule, func(hook *hook.Hook, info controller.BindingExecutionInfo) {
 				newTask := task.NewTask(HookRun).
 					WithMetadata(HookMetadata{
 						HookName:       hook.Name,
