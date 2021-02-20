@@ -2,7 +2,7 @@
 
 This binding transforms a hook into a handler for conversions defined in CustomResourceDefinition. The Shell-operator updates a CRD with .spec.conversion, starts HTTPS server, and runs hooks to handle [ConversionReview requests](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#conversionreview-request-0).
 
-> Note: shell-operator use `apiextensions.k8s.io/v1`, so Kubernetes 1.16+ is needed.
+> Note: shell-operator use `apiextensions.k8s.io/v1`, so Kubernetes 1.16+ is required.
 
 ## Syntax
 
@@ -38,9 +38,9 @@ kubernetesCustomResourceConversion:
 
 - `conversions` — a required list of conversion rules. These rules are used to determine if a custom resource in ConversionReview can be converted by the hook.
 
-- `fromVersion` — a version of a custom resources that hook can convert.
+    - `fromVersion` — a version of a custom resource that hook can convert.
 
-- `toVersion` — a version of a custom resources that hook can produce.
+    - `toVersion` — a version of a custom resource that hook can produce.
 
 
 ## Example
