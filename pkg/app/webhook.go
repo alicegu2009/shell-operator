@@ -9,8 +9,8 @@ import (
 
 var ValidatingWebhookSettings = &validating.WebhookSettings{
 	Settings: server.Settings{
-		ServerCertPath: "/validating-certs/cert.crt",
-		ServerKeyPath:  "/validating-certs/cert.key",
+		ServerCertPath: "/validating-certs/tls.crt",
+		ServerKeyPath:  "/validating-certs/tls.key",
 		ClientCAPaths:  nil,
 		ServiceName:    "shell-operator-validating-svc",
 		ListenAddr:     "0.0.0.0",
@@ -22,8 +22,8 @@ var ValidatingWebhookSettings = &validating.WebhookSettings{
 
 var ConversionWebhookSettings = &conversion.WebhookSettings{
 	Settings: server.Settings{
-		ServerCertPath: "/conversion-certs/cert.crt",
-		ServerKeyPath:  "/conversion-certs/cert.key",
+		ServerCertPath: "/conversion-certs/tls.crt",
+		ServerKeyPath:  "/conversion-certs/tls.key",
 		ClientCAPaths:  nil,
 		ServiceName:    "shell-operator-conversion-svc",
 		ListenAddr:     "0.0.0.0",

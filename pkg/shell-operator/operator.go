@@ -365,7 +365,7 @@ func (op *ShellOperator) InitValidatingWebhookManager() (err error) {
 
 	err = op.ValidatingWebhookManager.Start()
 	if err != nil {
-		log.Errorf("Webhook start: %v", err)
+		log.Errorf("ValidatingWebhookManager start: %v", err)
 	}
 	return err
 }
@@ -1018,12 +1018,14 @@ func InitAndStart(operator *ShellOperator) error {
 	err = operator.InitValidatingWebhookManager()
 	if err != nil {
 		log.Errorf("INIT ValidatingWebhookManager failed: %s", err)
+		return err
 	}
 
 	// Setup conversion configs from hooks.
 	err = operator.InitConversionWebhookManager()
 	if err != nil {
 		log.Errorf("INIT ConversionWebhookManager failed: %s", err)
+		return err
 	}
 
 	operator.Start()

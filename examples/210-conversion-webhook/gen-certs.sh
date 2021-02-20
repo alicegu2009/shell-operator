@@ -3,7 +3,7 @@
 NAMESPACE=example-210
 SERVICE_NAME=example-210-conversion-service
 
-CERT_NAME=${SERVICE_NAME}.${NAMESPACE}
+COMMON_NAME=${SERVICE_NAME}.${NAMESPACE}
 
 set -eo pipefail
 
@@ -60,17 +60,17 @@ EOF
 )
 
 echo ">>> Generate cert.key and cert.crt"
-cat <<EOF | cfssl gencert -ca ca.pem -ca-key ca-key.pem -config <(echo "$CFSSL_CONFIG") -profile=server - | cfssljson -bare cert
+cat <<EOF | cfssl gencert -ca ca.pem -ca-key ca-key.pem -config <(echo "$CFSSL_CONFIG") -profile=server - | cfssljson -bare tls
 {
-  "CN": "${CERT_NAME}.svc",
+  "CN": "${COMMON_NAME}.svc",
   "key": {
     "algo": "rsa",
     "size": 2048
   },
   "hosts": [
-    "${CERT_NAME}",
-    "${CERT_NAME}.svc",
-    "${CERT_NAME}.svc.cluster.local"
+    "${COMMON_NAME}",
+    "${COMMON_NAME}.svc",
+    "${COMMON_NAME}.svc.cluster.local"
   ]
 }
 EOF
