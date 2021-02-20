@@ -171,11 +171,18 @@ There are command line options and corresponding environment variables to setup 
 
 ```
   --conversion-webhook-service-name="shell-operator-conversion-svc"
-                                 A name of a service for clientConfig in CRD. Can be set with $CONVERSION_WEBHOOK_SERVICE_NAME.
-  --conversion-webhook-server-cert="/conversion-certs/cert.crt"
-                                 A path to a server certificate for clientConfig in CRD. Can be set with $CONVERSION_WEBHOOK_SERVER_CERT.
-  --conversion-webhook-server-key="/conversion-certs/cert.key"
-                                 A path to a server private key for clientConfig in CRD. Can be set with $CONVERSION_WEBHOOK_SERVER_KEY.
+                                 A name of a service for clientConfig in CRD. Can be set with
+                                 $CONVERSION_WEBHOOK_SERVICE_NAME.
+  --conversion-webhook-server-cert="/conversion-certs/tls.crt"
+                                 A path to a server certificate for clientConfig in CRD. Can be set with
+                                 $CONVERSION_WEBHOOK_SERVER_CERT.
+  --conversion-webhook-server-key="/conversion-certs/tls.key"
+                                 A path to a server private key for clientConfig in CRD. Can be set with
+                                 $CONVERSION_WEBHOOK_SERVER_KEY.
   --conversion-webhook-ca="/conversion-certs/ca.crt"
-                                 A path to a ca certificate for clientConfig in CRD. Can be set with $CONVERSION_WEBHOOK_CA.
+                                 A path to a ca certificate for clientConfig in CRD. Can be set with
+                                 $CONVERSION_WEBHOOK_CA.
+  --conversion-webhook-client-ca=CONVERSION-WEBHOOK-CLIENT-CA ...
+                                 A path to a server certificate for CRD.spec.conversion.webhook. Can be set
+                                 with $CONVERSION_WEBHOOK_CLIENT_CA.
 ```
