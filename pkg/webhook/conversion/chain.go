@@ -112,7 +112,7 @@ func (cs ChainStorage) FindConversionChain(crdName string, rule ConversionRule) 
 }
 
 func (c Chain) SearchPathForRule(rule ConversionRule) []string {
-	IDs := []string{}
+	ids := []string{}
 	for k := range c.PathsCache {
 		r := RuleFromString(k)
 		// Return is full equal is found.
@@ -120,21 +120,21 @@ func (c Chain) SearchPathForRule(rule ConversionRule) []string {
 			return c.PathsCache[k]
 		}
 		if VersionsMatched(rule.ToVersion, r.ToVersion) && VersionsMatched(rule.FromVersion, r.FromVersion) {
-			IDs = append(IDs, k)
+			ids = append(ids, k)
 		}
 	}
 
 	// Oops. No similar paths.
-	if len(IDs) == 0 {
+	if len(ids) == 0 {
 		return nil
 	}
 	// Return if only one ID is found.
-	if len(IDs) == 1 {
-		return c.PathsCache[IDs[0]]
+	if len(ids) == 1 {
+		return c.PathsCache[ids[0]]
 	}
 
 	// Try to find a more stricter match. Prefer match of full toVersions.
-	// IDs len should not be more than 3 items from these variants:
+	// ids len should not be more than 3 items from these variants:
 	// 1. group1/v1->v2
 	// 2. group1/v1->group2/v2
 	// 3. v1->group2/v2
@@ -145,7 +145,7 @@ func (c Chain) SearchPathForRule(rule ConversionRule) []string {
 	toMatches := []string{}
 	idxFrom := strings.IndexRune(rule.FromVersion, '/')
 	idxTo := strings.IndexRune(rule.ToVersion, '/')
-	for _, k := range IDs {
+	for _, k := range ids {
 		r := RuleFromString(k)
 		cc := 0
 		if idxFrom >= 0 && r.FromVersion == rule.FromVersion {
@@ -167,7 +167,7 @@ func (c Chain) SearchPathForRule(rule ConversionRule) []string {
 	if len(fromMatches) > 0 {
 		return c.PathsCache[fromMatches[0]]
 	}
-	return c.PathsCache[IDs[0]]
+	return c.PathsCache[ids[0]]
 }
 
 func (c Chain) IDsByFromVersion(rule ConversionRule) []string {

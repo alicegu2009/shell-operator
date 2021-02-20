@@ -8,12 +8,12 @@ func Test_SafeURLString(t *testing.T) {
 		out string
 	}{
 		{
-			"azazaOlolo",
-			"azaza-ololo",
+			"importantHook",
+			"important-hook",
 		},
 		{
-			"hooks/azazaOlolo",
-			"hooks/azaza-ololo",
+			"hooks/nextHook",
+			"hooks/next-hook",
 		},
 		{
 			"weird spaced Name",

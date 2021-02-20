@@ -8,21 +8,21 @@ kubernetesCustomResourceConversion:
 - name: up_conversions
   crdName: crontabs.stable.example.com
   conversions:
-  - fromVersion: group.io/azaza
-    toVersion: ololo
-  - fromVersion: unstable.example.com/ololo
-    toVersion: foobar
-  - fromVersion: stable.example.com/foobar
-    toVersion: next.io/abc
+  - fromVersion: group.io/alpha
+    toVersion: beta
+  - fromVersion: unstable.example.com/beta
+    toVersion: gamma
+  - fromVersion: stable.example.com/gamma
+    toVersion: next.io/delta
 - name: down_conversions
   crdName: crontabs.stable.example.com
   conversions:
-  - fromVersion: stable.example.com/abc
-    toVersion: stable.example.com/foobar
-  - fromVersion: foobar
-    toVersion: ololo
-  - fromVersion: ololo
-    toVersion: azaza
+  - fromVersion: stable.example.com/delta
+    toVersion: stable.example.com/gamma
+  - fromVersion: gamma
+    toVersion: beta
+  - fromVersion: beta
+    toVersion: alpha
 EOF
 
 else

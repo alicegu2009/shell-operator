@@ -154,55 +154,55 @@ func (h *Hook) GetConfigDescription() string {
 		msgs = append(msgs, fmt.Sprintf("OnStartup:%d", int64(h.Config.OnStartup.Order)))
 	}
 	if len(h.Config.Schedules) > 0 {
-		crontabs := map[string]bool{}
+		crontabs := map[string]struct{}{}
 		for _, schCfg := range h.Config.Schedules {
-			crontabs[schCfg.ScheduleEntry.Crontab] = true
+			crontabs[schCfg.ScheduleEntry.Crontab] = struct{}{}
 		}
-		crontabList := []string{}
+		crontabList := make([]string, 0, len(crontabs))
 		for crontab := range crontabs {
 			crontabList = append(crontabList, crontab)
 		}
 		msgs = append(msgs, fmt.Sprintf("Schedules: '%s'", strings.Join(crontabList, "', '")))
 	}
 	if len(h.Config.OnKubernetesEvents) > 0 {
-		kinds := map[string]bool{}
+		kinds := map[string]struct{}{}
 		for _, kubeCfg := range h.Config.OnKubernetesEvents {
-			kinds[kubeCfg.Monitor.Kind] = true
+			kinds[kubeCfg.Monitor.Kind] = struct{}{}
 		}
-		kindList := []string{}
+		kindList := make([]string, 0, len(kinds))
 		for kind := range kinds {
 			kindList = append(kindList, kind)
 		}
 		msgs = append(msgs, fmt.Sprintf("Watch k8s kinds: '%s'", strings.Join(kindList, "', '")))
 	}
 	if len(h.Config.KubernetesValidating) > 0 {
-		kinds := map[string]bool{}
+		kinds := map[string]struct{}{}
 		for _, validating := range h.Config.KubernetesValidating {
 			if validating.Webhook == nil {
 				continue
 			}
 			for _, rule := range validating.Webhook.Rules {
 				for _, resource := range rule.Resources {
-					kinds[strings.ToLower(resource)] = true
+					kinds[strings.ToLower(resource)] = struct{}{}
 				}
 			}
 		}
-		kindList := []string{}
+		kindList := make([]string, 0, len(kinds))
 		for kind := range kinds {
 			kindList = append(kindList, kind)
 		}
 		msgs = append(msgs, fmt.Sprintf("Validate k8s kinds: '%s'", strings.Join(kindList, "', '")))
 	}
 	if len(h.Config.KubernetesConversion) > 0 {
-		crds := map[string]bool{}
+		crds := map[string]struct{}{}
 		for _, cfg := range h.Config.KubernetesConversion {
 			if cfg.Webhook == nil {
 				// This should not happen.
 				continue
 			}
-			crds[cfg.Webhook.CrdName] = true
+			crds[cfg.Webhook.CrdName] = struct{}{}
 		}
-		crdList := []string{}
+		crdList := make([]string, 0, len(crds))
 		for crd := range crds {
 			crdList = append(crdList, crd)
 		}

@@ -8,21 +8,21 @@ kubernetesCustomResourceConversion:
 - name: up_conversions
   crdName: crontabs.stable.example.com
   conversions:
-  - fromVersion: azaza
-    toVersion: ololo
-  - fromVersion: ololo
-    toVersion: foobar
-  - fromVersion: foobar
-    toVersion: abc
+  - fromVersion: alpha
+    toVersion: beta
+  - fromVersion: beta
+    toVersion: gamma
+  - fromVersion: gamma
+    toVersion: delta
 - name: down_conversions
   crdName: crontabs.stable.example.com
   conversions:
-  - fromVersion: abc
-    toVersion: foobar
-  - fromVersion: foobar
-    toVersion: ololo
-  - fromVersion: ololo
-    toVersion: azaza
+  - fromVersion: delta
+    toVersion: gamma
+  - fromVersion: gamma
+    toVersion: beta
+  - fromVersion: beta
+    toVersion: alpha
 EOF
 
 else

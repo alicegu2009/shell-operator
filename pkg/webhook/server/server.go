@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -62,7 +63,7 @@ func (s *WebhookServer) Start() error {
 		tlsConf.ClientCAs = roots
 	}
 
-	listenAddr := s.Settings.ListenAddr + ":" + s.Settings.ListenPort
+	listenAddr := net.JoinHostPort(s.Settings.ListenAddr, s.Settings.ListenPort)
 	// Check if port is available
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
@@ -85,6 +86,8 @@ func (s *WebhookServer) Start() error {
 		err := srv.ServeTLS(listener, "", "")
 		if err != nil {
 			log.Errorf("Error starting Webhook https server: %v", err)
+			// Stop process if server can't start.
+			os.Exit(1)
 		}
 	}()
 

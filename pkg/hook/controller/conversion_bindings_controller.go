@@ -58,21 +58,6 @@ func (c *conversionBindingsController) WithWebhookManager(mgr *conversion.Webhoo
 }
 
 func (c *conversionBindingsController) EnableConversionBindings() {
-	//confId := ""
-	//for _, config := range c.Bindings {
-	//	if config.Webhook.Metadata.ConfigurationId == "" && confId == "" {
-	//		continue
-	//	}
-	//	if config.Webhook.Metadata.ConfigurationId != "" && confId == "" {
-	//		confId = config.Webhook.Metadata.ConfigurationId
-	//		continue
-	//	}
-	//	if config.Webhook.Metadata.ConfigurationId != confId {
-	//		log.Errorf("Possible bug!!! kubernetesValidating has non-unique configurationIds: '%s' '%s'", config.Webhook.Metadata.ConfigurationId, confId)
-	//	}
-	//}
-	//c.ConfigurationId = confId
-
 	// Setup links and inform webhookManager about webhooks.
 	for _, config := range c.Bindings {
 		if _, ok := c.Links[config.Webhook.CrdName]; !ok {
