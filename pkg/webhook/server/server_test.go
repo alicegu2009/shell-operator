@@ -2,9 +2,10 @@ package server
 
 import (
 	"crypto/x509"
-	"github.com/go-chi/chi"
 	"io/ioutil"
 	"testing"
+
+	"github.com/go-chi/chi"
 )
 
 func Test_ServerStart(t *testing.T) {
