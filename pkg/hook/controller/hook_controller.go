@@ -4,7 +4,6 @@ import (
 	. "github.com/flant/shell-operator/pkg/hook/binding_context"
 	. "github.com/flant/shell-operator/pkg/hook/types"
 	. "github.com/flant/shell-operator/pkg/kube_events_manager/types"
-	. "github.com/flant/shell-operator/pkg/webhook/conversion/types"
 	. "github.com/flant/shell-operator/pkg/webhook/validating/types"
 
 	"github.com/flant/shell-operator/pkg/kube_events_manager"
@@ -44,7 +43,7 @@ type HookController interface {
 	CanHandleKubeEvent(kubeEvent KubeEvent) bool
 	CanHandleScheduleEvent(crontab string) bool
 	CanHandleValidatingEvent(event ValidatingEvent) bool
-	CanHandleConversionEvent(event ConversionEvent, conversionRuleId string) bool
+	CanHandleConversionEvent(event conversion.Event, conversionRuleId string) bool
 
 	// These method should call underlying BindingController to get binding context
 	// and then add Snapshots to binding context
@@ -52,7 +51,7 @@ type HookController interface {
 	HandleKubeEvent(event KubeEvent, createTasksFn func(BindingExecutionInfo))
 	HandleScheduleEvent(crontab string, createTasksFn func(BindingExecutionInfo))
 	HandleValidatingEvent(event ValidatingEvent, createTasksFn func(BindingExecutionInfo))
-	HandleConversionEvent(event ConversionEvent, conversionRuleId string, createTasksFn func(BindingExecutionInfo))
+	HandleConversionEvent(event conversion.Event, conversionRuleId string, createTasksFn func(BindingExecutionInfo))
 
 	StartMonitors()
 	StopMonitors()
@@ -154,7 +153,7 @@ func (hc *hookController) CanHandleValidatingEvent(event ValidatingEvent) bool {
 	return false
 }
 
-func (hc *hookController) CanHandleConversionEvent(event ConversionEvent, conversionRuleID string) bool {
+func (hc *hookController) CanHandleConversionEvent(event conversion.Event, conversionRuleID string) bool {
 	if hc.ConversionController != nil {
 		return hc.ConversionController.CanHandleEvent(event, conversionRuleID)
 	}
@@ -197,7 +196,7 @@ func (hc *hookController) HandleValidatingEvent(event ValidatingEvent, createTas
 	}
 }
 
-func (hc *hookController) HandleConversionEvent(event ConversionEvent, conversionRuleId string, createTasksFn func(BindingExecutionInfo)) {
+func (hc *hookController) HandleConversionEvent(event conversion.Event, conversionRuleId string, createTasksFn func(BindingExecutionInfo)) {
 	if hc.ConversionController == nil {
 		return
 	}

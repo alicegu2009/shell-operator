@@ -6,11 +6,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func Test_ConversionRule_FromString(t *testing.T) {
+func Test_Rule_FromString(t *testing.T) {
 	g := NewWithT(t)
 
 	var r string
-	var c ConversionRule
+	var c Rule
 
 	r = "asd->qwe"
 	c = RuleFromString(r)

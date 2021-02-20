@@ -6,13 +6,12 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/flant/shell-operator/pkg/kube"
-	. "github.com/flant/shell-operator/pkg/webhook/conversion/types"
 	"github.com/flant/shell-operator/pkg/webhook/server"
 )
 
-type ConversionEventHandlerFn func(event ConversionEvent) (*ConversionResponse, error)
+type EventHandlerFn func(event Event) (*Response, error)
 
-// ConversionManager is a public interface to be used from operator.go.
+// WebhookManager is a public interface to be used from operator.go.
 //
 // No dynamic configuration for now. The steps are:
 //   - Init():
@@ -26,9 +25,9 @@ type ConversionEventHandlerFn func(event ConversionEvent) (*ConversionResponse, 
 type WebhookManager struct {
 	KubeClient kube.KubernetesClient
 
-	ConversionEventHandlerFn ConversionEventHandlerFn
-	Settings                 *WebhookSettings
-	Namespace                string
+	EventHandlerFn EventHandlerFn
+	Settings       *WebhookSettings
+	Namespace      string
 
 	Server        *server.WebhookServer
 	ClientConfigs map[string]*CrdClientConfig
@@ -83,7 +82,7 @@ func (m *WebhookManager) Start() error {
 	return nil
 }
 
-func (m *WebhookManager) AddWebhook(webhook *ConversionWebhookConfig) {
+func (m *WebhookManager) AddWebhook(webhook *WebhookConfig) {
 	if _, ok := m.ClientConfigs[webhook.CrdName]; !ok {
 		m.ClientConfigs[webhook.CrdName] = &CrdClientConfig{
 			KubeClient:  m.KubeClient,

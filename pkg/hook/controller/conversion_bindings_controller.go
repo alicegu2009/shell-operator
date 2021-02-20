@@ -6,7 +6,6 @@ import (
 	. "github.com/flant/shell-operator/pkg/hook/binding_context"
 	. "github.com/flant/shell-operator/pkg/hook/types"
 	"github.com/flant/shell-operator/pkg/webhook/conversion"
-	. "github.com/flant/shell-operator/pkg/webhook/conversion/types"
 )
 
 // A link between a hook and a kube monitor
@@ -26,8 +25,8 @@ type ConversionBindingsController interface {
 	WithWebhookManager(manager *conversion.WebhookManager)
 	EnableConversionBindings()
 	DisableConversionBindings()
-	CanHandleEvent(event ConversionEvent, conversionRuleId string) bool
-	HandleEvent(event ConversionEvent, conversionRuleId string) BindingExecutionInfo
+	CanHandleEvent(event conversion.Event, conversionRuleId string) bool
+	HandleEvent(event conversion.Event, conversionRuleId string) BindingExecutionInfo
 }
 
 // Controller holds validating bindings from one hook.
@@ -63,7 +62,7 @@ func (c *conversionBindingsController) EnableConversionBindings() {
 		if _, ok := c.Links[config.Webhook.CrdName]; !ok {
 			c.Links[config.Webhook.CrdName] = map[string]*ConversionBindingToWebhookLink{}
 		}
-		for _, conv := range config.Webhook.Conversions {
+		for _, conv := range config.Webhook.Rules {
 			c.Links[config.Webhook.CrdName][conv.String()] = &ConversionBindingToWebhookLink{
 				BindingName:      config.BindingName,
 				IncludeSnapshots: config.IncludeSnapshotsFrom,
@@ -81,7 +80,7 @@ func (c *conversionBindingsController) DisableConversionBindings() {
 	// TODO dynamic enable/disable conversion webhooks.
 }
 
-func (c *conversionBindingsController) CanHandleEvent(event ConversionEvent, conversionRuleID string) bool {
+func (c *conversionBindingsController) CanHandleEvent(event conversion.Event, conversionRuleID string) bool {
 	_, has := c.Links[event.CrdName]
 	if !has {
 		return false
@@ -90,7 +89,7 @@ func (c *conversionBindingsController) CanHandleEvent(event ConversionEvent, con
 	return has
 }
 
-func (c *conversionBindingsController) HandleEvent(event ConversionEvent, conversionRuleID string) BindingExecutionInfo {
+func (c *conversionBindingsController) HandleEvent(event conversion.Event, conversionRuleID string) BindingExecutionInfo {
 	_, hasKey := c.Links[event.CrdName]
 	if !hasKey {
 		log.Errorf("Possible bug!!! No binding for conversion event for crd/%s", event.CrdName)

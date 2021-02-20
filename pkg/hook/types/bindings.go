@@ -51,7 +51,7 @@ type ConversionConfig struct {
 	CommonBindingConfig
 	IncludeSnapshotsFrom []string
 	Group                string
-	Webhook              *conversion.ConversionWebhookConfig
+	Webhook              *conversion.WebhookConfig
 }
 
 type ValidatingConfig struct {

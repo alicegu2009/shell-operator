@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/flant/shell-operator/pkg/utils/structured-logger"
-	. "github.com/flant/shell-operator/pkg/webhook/conversion/types"
 )
 
 type WebhookHandler struct {
@@ -89,7 +88,7 @@ func (h *WebhookHandler) HandleReviewRequest(path string, body []byte) (*v1.Conv
 		},
 	}
 
-	if h.Manager.ConversionEventHandlerFn == nil {
+	if h.Manager.EventHandlerFn == nil {
 		review.Response.Result = metav1.Status{
 			Status:  "Failed",
 			Message: "ConversionReview handler is not defined",
@@ -102,7 +101,7 @@ func (h *WebhookHandler) HandleReviewRequest(path string, body []byte) (*v1.Conv
 		return nil, err
 	}
 
-	conversionResponse, err := h.Manager.ConversionEventHandlerFn(event)
+	conversionResponse, err := h.Manager.EventHandlerFn(event)
 	if err != nil {
 		review.Response.Result = metav1.Status{
 			Status:  "Failed",
@@ -147,7 +146,7 @@ func DetectCrdName(path string) string {
 	return strings.TrimPrefix(path, "/")
 }
 
-func PrepareConversionEvent(crdName string, review *v1.ConversionReview) (event ConversionEvent, err error) {
+func PrepareConversionEvent(crdName string, review *v1.ConversionReview) (event Event, err error) {
 	event.CrdName = crdName
 	event.Review = review
 	event.Objects, err = RawExtensionToUnstructured(review.Request.Objects)

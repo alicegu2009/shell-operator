@@ -81,11 +81,11 @@ type KubernetesValidatingConfigV1 struct {
 
 // version 1 of kubernetes conversion configuration
 type KubernetesConversionConfigV1 struct {
-	Name                 string                      `json:"name,omitempty"`
-	IncludeSnapshotsFrom []string                    `json:"includeSnapshotsFrom,omitempty"`
-	Group                string                      `json:"group,omitempty"`
-	CrdName              string                      `json:"crdName,omitempty"`
-	Conversions          []conversion.ConversionRule `json:"conversions,omitempty"`
+	Name                 string            `json:"name,omitempty"`
+	IncludeSnapshotsFrom []string          `json:"includeSnapshotsFrom,omitempty"`
+	Group                string            `json:"group,omitempty"`
+	CrdName              string            `json:"crdName,omitempty"`
+	Conversions          []conversion.Rule `json:"conversions,omitempty"`
 }
 
 // ConvertAndCheck fills non-versioned structures and run inter-field checks not covered by OpenAPI schemas.
@@ -450,9 +450,9 @@ func (cv1 *HookConfigV1) ConvertConversion(cfgV1 KubernetesConversionConfigV1) (
 	cfg.IncludeSnapshotsFrom = cfgV1.IncludeSnapshotsFrom
 	cfg.BindingName = cfgV1.Name
 
-	cfg.Webhook = &conversion.ConversionWebhookConfig{
-		Conversions: cfgV1.Conversions,
-		CrdName:     cfgV1.CrdName,
+	cfg.Webhook = &conversion.WebhookConfig{
+		Rules:   cfgV1.Conversions,
+		CrdName: cfgV1.CrdName,
 	}
 
 	cfg.Webhook.Metadata.LogLabels = map[string]string{}

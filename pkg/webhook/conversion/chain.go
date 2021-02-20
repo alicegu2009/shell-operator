@@ -6,32 +6,35 @@ import (
 	"github.com/flant/shell-operator/pkg/utils/string_helper"
 )
 
-type ChainStorage map[string]*Chain
+type ChainStorage struct {
+	Chains map[string]*Chain
+}
 
-func NewChainStorage() ChainStorage {
-	return make(map[string]*Chain)
+func NewChainStorage() *ChainStorage {
+	return &ChainStorage{
+		Chains: make(map[string]*Chain),
+	}
 }
 
 type Chain struct {
-	// Index: ruleID ("srcVer->desiredVer") to a sequence of "primitive" ruleIDs.
+	// Index: ruleID ("srcVer->desiredVer") to a sequence of base rules.
 	PathsCache map[string][]string
 	// from -> to cache
 	FromToCache map[string]map[string]bool
 }
 
-// Access
-
+// Access a Chain by CRD full name (e.g. crontab.stable.example.com)
 func (cs ChainStorage) Get(crdName string) *Chain {
-	if _, ok := cs[crdName]; !ok {
-		cs[crdName] = &Chain{
+	if _, ok := cs.Chains[crdName]; !ok {
+		cs.Chains[crdName] = &Chain{
 			PathsCache:  make(map[string][]string),
 			FromToCache: make(map[string]map[string]bool),
 		}
 	}
-	return cs[crdName]
+	return cs.Chains[crdName]
 }
 
-func (c *Chain) Put(rule ConversionRule) {
+func (c *Chain) Put(rule Rule) {
 	// paths "from->to"
 	ruleID := rule.String()
 	c.PathsCache[ruleID] = []string{ruleID}
@@ -43,9 +46,9 @@ func (c *Chain) Put(rule ConversionRule) {
 }
 
 // Calculations
-
-func (cs ChainStorage) FindConversionChain(crdName string, rule ConversionRule) []string {
-	chain, ok := cs[crdName]
+// FindConversionChain returns an array of ConverionsRules that should be
+func (cs ChainStorage) FindConversionChain(crdName string, rule Rule) []string {
+	chain, ok := cs.Chains[crdName]
 	if !ok {
 		return nil
 	}
@@ -75,7 +78,7 @@ func (cs ChainStorage) FindConversionChain(crdName string, rule ConversionRule) 
 
 			// toVersion in ruleIDToCheck is a new start. Get toVersions available starting from it.
 			for _, nextRule := range chain.NextRules(ruleToCheck.ToVersion) {
-				newRule := ConversionRule{
+				newRule := Rule{
 					FromVersion: rule.FromVersion,
 					ToVersion:   nextRule.ToVersion,
 				}
@@ -111,7 +114,7 @@ func (cs ChainStorage) FindConversionChain(crdName string, rule ConversionRule) 
 	return nil
 }
 
-func (c Chain) SearchPathForRule(rule ConversionRule) []string {
+func (c Chain) SearchPathForRule(rule Rule) []string {
 	ids := []string{}
 	for k := range c.PathsCache {
 		r := RuleFromString(k)
@@ -170,7 +173,7 @@ func (c Chain) SearchPathForRule(rule ConversionRule) []string {
 	return c.PathsCache[ids[0]]
 }
 
-func (c Chain) IDsByFromVersion(rule ConversionRule) []string {
+func (c Chain) IDsByFromVersion(rule Rule) []string {
 	IDs := []string{}
 	for k := range c.PathsCache {
 		idxFrom := strings.Index(k, rule.ShortFromVersion())
@@ -189,14 +192,14 @@ func (c Chain) IDsByFromVersion(rule ConversionRule) []string {
 }
 
 // AvailableToVersions finds all toVersions by an input fromVer in FromToCache maps.
-func (c Chain) NextRules(fromVer string) []ConversionRule {
-	rules := []ConversionRule{}
+func (c Chain) NextRules(fromVer string) []Rule {
+	rules := []Rule{}
 	shortVer := string_helper.TrimGroup(fromVer)
 	for k := range c.FromToCache {
 		//
 		if k == fromVer {
 			for toVer := range c.FromToCache[k] {
-				rules = append(rules, ConversionRule{
+				rules = append(rules, Rule{
 					FromVersion: k,
 					ToVersion:   toVer,
 				})
@@ -209,7 +212,7 @@ func (c Chain) NextRules(fromVer string) []ConversionRule {
 			continue
 		}
 		for toVer := range c.FromToCache[k] {
-			rules = append(rules, ConversionRule{
+			rules = append(rules, Rule{
 				FromVersion: k,
 				ToVersion:   toVer,
 			})

@@ -13,7 +13,6 @@ import (
 
 	. "github.com/flant/shell-operator/pkg/hook/binding_context"
 	. "github.com/flant/shell-operator/pkg/hook/types"
-	. "github.com/flant/shell-operator/pkg/webhook/conversion/types"
 	. "github.com/flant/shell-operator/pkg/webhook/validating/types"
 
 	"github.com/flant/shell-operator/pkg/app"
@@ -21,6 +20,7 @@ import (
 	"github.com/flant/shell-operator/pkg/hook/config"
 	"github.com/flant/shell-operator/pkg/hook/controller"
 	"github.com/flant/shell-operator/pkg/metric_storage/operation"
+	"github.com/flant/shell-operator/pkg/webhook/conversion"
 )
 
 type CommonHook interface {
@@ -30,7 +30,7 @@ type CommonHook interface {
 type HookResult struct {
 	Usage              *executor.CmdUsage
 	Metrics            []operation.MetricOperation
-	ConversionResponse *ConversionResponse
+	ConversionResponse *conversion.Response
 	ValidatingResponse *ValidatingResponse
 }
 
@@ -136,7 +136,7 @@ func (h *Hook) Run(bindingType BindingType, context []BindingContext, logLabels 
 		return result, fmt.Errorf("got bad validating response: %s", err)
 	}
 
-	result.ConversionResponse, err = ConversionResponseFromFile(conversionPath)
+	result.ConversionResponse, err = conversion.ResponseFromFile(conversionPath)
 	if err != nil {
 		return result, fmt.Errorf("got bad conversion response: %s", err)
 	}

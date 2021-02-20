@@ -1,4 +1,4 @@
-package types
+package conversion
 
 import (
 	"bytes"
@@ -31,12 +31,12 @@ ConvertedObjects:
 # metadata.labels and metadata.annotations fields may be changed by the webhook.
 # All other changes to metadata fields by the webhook are ignored.
 */
-type ConversionResponse struct {
+type Response struct {
 	FailedMessage    string                      `json:"failedMessage"`
 	ConvertedObjects []unstructured.Unstructured `json:"convertedObjects,omitempty"`
 }
 
-func ConversionResponseFromFile(filePath string) (*ConversionResponse, error) {
+func ResponseFromFile(filePath string) (*Response, error) {
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read %s: %s", filePath, err)
@@ -45,15 +45,15 @@ func ConversionResponseFromFile(filePath string) (*ConversionResponse, error) {
 	if len(data) == 0 {
 		return nil, nil
 	}
-	return ConversionResponseFromBytes(data)
+	return ResponseFromBytes(data)
 }
 
-func ConversionResponseFromBytes(data []byte) (*ConversionResponse, error) {
-	return ConversionResponseFromReader(bytes.NewReader(data))
+func ResponseFromBytes(data []byte) (*Response, error) {
+	return ResponseFromReader(bytes.NewReader(data))
 }
 
-func ConversionResponseFromReader(r io.Reader) (*ConversionResponse, error) {
-	response := new(ConversionResponse)
+func ResponseFromReader(r io.Reader) (*Response, error) {
+	response := new(Response)
 
 	dec := json.NewDecoder(r)
 
@@ -66,9 +66,9 @@ func ConversionResponseFromReader(r io.Reader) (*ConversionResponse, error) {
 	return response, nil
 }
 
-func (r *ConversionResponse) Dump() string {
+func (r *Response) Dump() string {
 	b := new(strings.Builder)
-	b.WriteString("ConversionResponse(")
+	b.WriteString("conversion.Response(")
 	if r.FailedMessage != "" {
 		b.WriteString("failedMessage=")
 		b.WriteString(r.FailedMessage)

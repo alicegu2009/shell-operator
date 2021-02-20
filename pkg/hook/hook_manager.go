@@ -12,7 +12,6 @@ import (
 
 	. "github.com/flant/shell-operator/pkg/hook/types"
 	. "github.com/flant/shell-operator/pkg/kube_events_manager/types"
-	. "github.com/flant/shell-operator/pkg/webhook/conversion/types"
 	. "github.com/flant/shell-operator/pkg/webhook/validating/types"
 
 	"github.com/flant/shell-operator/pkg/executor"
@@ -40,8 +39,8 @@ type HookManager interface {
 	HandleKubeEvent(kubeEvent KubeEvent, createTaskFn func(*Hook, controller.BindingExecutionInfo))
 	HandleScheduleEvent(crontab string, createTaskFn func(*Hook, controller.BindingExecutionInfo))
 	HandleValidatingEvent(event ValidatingEvent, createTaskFn func(*Hook, controller.BindingExecutionInfo))
-	HandleConversionEvent(event ConversionEvent, conversionRuleID string, createTaskFn func(*Hook, controller.BindingExecutionInfo))
-	FindConversionChain(crdName string, rule conversion.ConversionRule) []string
+	HandleConversionEvent(event conversion.Event, conversionRuleID string, createTaskFn func(*Hook, controller.BindingExecutionInfo))
+	FindConversionChain(crdName string, rule conversion.Rule) []string
 }
 
 type hookManager struct {
@@ -62,7 +61,7 @@ type hookManager struct {
 	hooksInOrder map[BindingType][]*Hook
 
 	// Index crdName -> fromVersion -> conversionLink
-	conversionChains conversion.ChainStorage
+	conversionChains *conversion.ChainStorage
 }
 
 // hookManager should implement HookManager
@@ -325,7 +324,7 @@ func (hm *hookManager) HandleValidatingEvent(event ValidatingEvent, createTaskFn
 }
 
 // HandleConversionEvent receives a crdName and calculates a sequence of hooks to run.
-func (hm *hookManager) HandleConversionEvent(event ConversionEvent, conversionRuleID string, createTaskFn func(*Hook, controller.BindingExecutionInfo)) {
+func (hm *hookManager) HandleConversionEvent(event conversion.Event, conversionRuleID string, createTaskFn func(*Hook, controller.BindingExecutionInfo)) {
 	vHooks, _ := hm.GetHooksInOrder(KubernetesConversion)
 
 	for _, hookName := range vHooks {
@@ -350,7 +349,7 @@ func (hm *hookManager) UpdateConversionChains() error {
 		for _, cfg := range h.Config.KubernetesConversion {
 			crdName := cfg.Webhook.CrdName
 			chain := hm.conversionChains.Get(crdName)
-			for _, conversionRule := range cfg.Webhook.Conversions {
+			for _, conversionRule := range cfg.Webhook.Rules {
 				chain.Put(conversionRule)
 			}
 		}
@@ -359,6 +358,6 @@ func (hm *hookManager) UpdateConversionChains() error {
 	return nil
 }
 
-func (hm *hookManager) FindConversionChain(crdName string, rule conversion.ConversionRule) []string {
+func (hm *hookManager) FindConversionChain(crdName string, rule conversion.Rule) []string {
 	return hm.conversionChains.FindConversionChain(crdName, rule)
 }

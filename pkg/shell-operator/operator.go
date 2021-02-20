@@ -17,7 +17,6 @@ import (
 	. "github.com/flant/shell-operator/pkg/hook/task_metadata"
 	. "github.com/flant/shell-operator/pkg/hook/types"
 	. "github.com/flant/shell-operator/pkg/kube_events_manager/types"
-	. "github.com/flant/shell-operator/pkg/webhook/conversion/types"
 	. "github.com/flant/shell-operator/pkg/webhook/validating/types"
 
 	"github.com/flant/shell-operator/pkg/app"
@@ -377,7 +376,7 @@ func (op *ShellOperator) InitConversionWebhookManager() (err error) {
 	op.ConversionWebhookManager.Settings = app.ConversionWebhookSettings
 	op.ConversionWebhookManager.Namespace = app.Namespace
 	// This handler is called when Kubernetes requests a conversion.
-	op.ConversionWebhookManager.ConversionEventHandlerFn = op.ConversionEventHandler
+	op.ConversionWebhookManager.EventHandlerFn = op.ConversionEventHandler
 
 	err = op.ConversionWebhookManager.Init()
 	if err != nil {
@@ -402,7 +401,7 @@ func (op *ShellOperator) InitConversionWebhookManager() (err error) {
 }
 
 // ConversionEventHandler is called when Kubernetes requests a conversion.
-func (op *ShellOperator) ConversionEventHandler(event ConversionEvent) (*ConversionResponse, error) {
+func (op *ShellOperator) ConversionEventHandler(event conversion.Event) (*conversion.Response, error) {
 	logLabels := map[string]string{
 		"event.id": uuid.NewV4().String(),
 		"binding":  string(KubernetesConversion),
@@ -414,7 +413,7 @@ func (op *ShellOperator) ConversionEventHandler(event ConversionEvent) (*Convers
 
 	done := false
 	for _, srcVer := range sourceVersions {
-		rule := conversion.ConversionRule{
+		rule := conversion.Rule{
 			FromVersion: srcVer,
 			ToVersion:   event.Review.Request.DesiredAPIVersion,
 		}
@@ -452,16 +451,16 @@ func (op *ShellOperator) ConversionEventHandler(event ConversionEvent) (*Convers
 			res := op.TaskHandler(tasks[0])
 
 			if res.Status == "Fail" {
-				return &ConversionResponse{
+				return &conversion.Response{
 					FailedMessage:    fmt.Sprintf("Hook failed to convert to %s", event.Review.Request.DesiredAPIVersion),
 					ConvertedObjects: nil,
 				}, nil
 			}
 
 			prop := tasks[0].GetProp("conversionResponse")
-			response, ok := prop.(*ConversionResponse)
+			response, ok := prop.(*conversion.Response)
 			if !ok {
-				logEntry.Errorf("'conversionResponse' task prop is not of type *ConversionResponse: %T", prop)
+				logEntry.Errorf("'conversionResponse' task prop is not of type *conversion.Response: %T", prop)
 				return nil, fmt.Errorf("hook task prop error")
 			}
 
@@ -485,12 +484,12 @@ func (op *ShellOperator) ConversionEventHandler(event ConversionEvent) (*Convers
 	}
 
 	if done {
-		return &ConversionResponse{
+		return &conversion.Response{
 			ConvertedObjects: event.Objects,
 		}, nil
 	}
 
-	return &ConversionResponse{
+	return &conversion.Response{
 		FailedMessage: fmt.Sprintf("Conversion to %s was not successuful", event.Review.Request.DesiredAPIVersion),
 	}, nil
 }
