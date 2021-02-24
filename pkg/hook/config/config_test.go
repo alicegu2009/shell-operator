@@ -678,7 +678,7 @@ kubernetesCustomResourceConversion:
 				g.Expect(cfg.Webhook).ShouldNot(BeNil())
 				wh := cfg.Webhook
 				g.Expect(wh.CrdName).Should(Equal("crontabs.stable.example.com"))
-				g.Expect(wh.Conversions).Should(HaveLen(1))
+				g.Expect(wh.Rules).Should(HaveLen(1))
 
 				// Conversion section with multiple conversions.
 				cfg = hookConfig.KubernetesConversion[1]
@@ -686,7 +686,7 @@ kubernetesCustomResourceConversion:
 				g.Expect(cfg.Webhook).ShouldNot(BeNil())
 				wh = cfg.Webhook
 				g.Expect(wh.CrdName).Should(Equal("crontabs.stable.example.com"))
-				g.Expect(wh.Conversions).Should(HaveLen(3))
+				g.Expect(wh.Rules).Should(HaveLen(3))
 			},
 		},
 		{
